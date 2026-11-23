@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Minha Carteira</title>
+<style>
+  :root {
+    --primary: #0F3D3E;
+    --primary-2: #1B6B6D;
+    --accent: #F2A33A;
+    --bg: #F3F5F4;
+    --card: #FFFFFF;
+    --text: #12302F;
+    --muted: #7B8B8A;
+    --line: #E3E9E8;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
+  #app { height: 100%; display: flex; flex-direction: column; }
+  .screen { display: none; flex: 1; flex-direction: column; min-height: 0; }
+  .screen.active { display: flex; }
+  .scroll { flex: 1; overflow-y: auto; }
+
+  /* Top bar */
+  .topbar { display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; background: #fff; }
+  .logo { font-weight: 800; font-size: 24px; color: var(--primary); letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  .top-right { display: flex; align-items: center; gap: 14px; }
+  .bell { position: relative; width: 28px; height: 28px; color: var(--primary-2); }
+  .bell .badge { position: absolute; top: -4px; right: -6px; background: var(--accent);
+    color: #fff; font-size: 11px; font-weight: 700; width: 18px; height: 18px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .avatar { width: 44px; height: 44px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--primary-2), var(--accent)); }
+
+  /* Banner */
+  .banner { background: linear-gradient(135deg, var(--primary), var(--primary-2));
+    color: #fff; padding: 20px 18px 22px; position: relative; overflow: hidden; }
+  .banner::after { content: ""; position: absolute; right: -40px; top: -30px; width: 180px; height: 180px;
+    border-radius: 50%; background: rgba(242,163,58,.18); }
+  .banner h2 { margin: 0 0 4px; font-size: 20px; font-weight: 600; }
+  .banner p { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; }
+  .stripes { display: flex; gap: 6px; margin-top: 14px; }
+  .stripes i { flex: 1; height: 5px; background: var(--accent); border-radius: 3px; }
+  .pill { position: absolute; right: 16px; bottom: 14px; z-index: 1; background: #fff; color: var(--primary);
+    font-size: 12px; font-weight: 700; padding: 8px 16px; border-radius: 20px; letter-spacing: .5px; }
+
+  /* Search */
+  .search { margin: 18px 16px; display: flex; align-items: center; justify-content: space-between;
+    background: #fff; border: 1px solid #C9D3D2; border-radius: 10px; padding: 14px 16px;
+    color: #4A5C5B; font-style: italic; font-size: 15px; }
+  .search svg { color: var(--primary-2); }
+
+  /* Services */
+  .card { background: var(--card); margin: 0 12px 16px; border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08); padding: 6px 10px 8px; }
+  .card h3 { margin: 12px 4px 8px; font-size: 17px; font-weight: 600; color: var(--muted); }
+  .item { display: flex; align-items: center; gap: 14px; padding: 18px 6px;
+    border-top: 1px solid var(--line); font-weight: 700; font-size: 16px; color: var(--primary); }
+  .item .ico { width: 24px; height: 24px; color: var(--primary-2); flex: none; }
+  .item .label { flex: 1; }
+  .item .chev { color: var(--primary-2); }
+  .tag { background: var(--accent); color: #fff; font-size: 11px; font-weight: 800;
+    padding: 4px 10px; border-radius: 12px; }
+  .count { background: var(--primary-2); color: #fff; font-size: 12px; font-weight: 800;
+    width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .item.live { cursor: pointer; }
+  .item.live:active { background: #EEF4F3; }
+
+  /* Bottom nav */
+  .nav { display: flex; align-items: flex-end; justify-content: space-around; background: #fff;
+    border-top: 1px solid var(--line); padding: 6px 0 8px; }
+  .nav button { background: none; border: 0; display: flex; flex-direction: column; align-items: center;
+    gap: 3px; font-size: 12px; color: #9AA9A8; font-family: inherit; padding: 4px 8px; min-width: 56px; }
+  .nav button.on { color: var(--primary-2); font-weight: 600; }
+  .nav button.live { cursor: pointer; }
+  .nav .qr { width: 56px; height: 56px; border-radius: 50%; background: var(--primary-2); color: #fff;
+    display: flex; align-items: center; justify-content: center; margin-top: -22px; }
+  .nav .qr-wrap { padding-top: 0; }
+  .nav svg { width: 22px; height: 22px; }
+
+  /* Wallet screen */
+  .wbar { display: flex; align-items: center; gap: 10px; padding: 14px 12px; background: var(--primary); color: #fff; }
+  .wbar button { background: none; border: 0; color: #fff; padding: 6px; display: flex; }
+  .wbar h1 { margin: 0; font-size: 19px; font-weight: 700; flex: 1; }
+  .wbody { padding: 14px 14px 90px; }
+  .empty { text-align: center; color: var(--muted); padding: 60px 24px; }
+  .empty svg { width: 56px; height: 56px; color: #B9C6C5; margin-bottom: 10px; }
+  .doc { display: flex; align-items: center; gap: 14px; background: #fff; border-radius: 12px;
+    padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.08); cursor: pointer; }
+  .doc img { width: 64px; height: 48px; object-fit: cover; border-radius: 6px; background: #DDE5E4; }
+  .doc .meta { flex: 1; min-width: 0; }
+  .doc .meta b { display: block; font-size: 16px; color: var(--primary); white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; }
+  .doc .meta small { color: var(--muted); font-size: 12px; }
+  .fab { position: absolute; right: 18px; bottom: 22px; background: var(--accent); color: #fff; border: 0;
+    border-radius: 28px; padding: 14px 20px; font-size: 15px; font-weight: 700; display: flex; gap: 8px;
+    align-items: center; box-shadow: 0 3px 10px rgba(0,0,0,.25); font-family: inherit; }
+
+  /* Modal */
+  .overlay { position: absolute; inset: 0; background: rgba(0,0,0,.55); display: none;
+    align-items: flex-end; justify-content: center; z-index: 10; }
+  .overlay.show { display: flex; }
+  .sheet { background: #fff; width: 100%; border-radius: 18px 18px 0 0; padding: 20px 18px 24px; max-height: 92%; overflow-y: auto; }
+  .sheet h4 { margin: 0 0 14px; font-size: 18px; color: var(--primary); }
+  .sheet label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 6px; }
+  .sheet input[type=text] { width: 100%; padding: 12px; border: 1px solid #C9D3D2; border-radius: 8px;
+    font-size: 16px; font-family: inherit; }
+  .pick { display: block; width: 100%; padding: 14px; border: 2px dashed #B9C6C5; background: #F7FAF9;
+    border-radius: 10px; color: var(--primary-2); font-weight: 700; font-size: 15px; font-family: inherit; }
+  .preview { width: 100%; max-height: 220px; object-fit: contain; border-radius: 8px; margin-top: 10px; display: none; background: #EEF2F1; }
+  .row { display: flex; gap: 10px; margin-top: 18px; }
+  .btn { flex: 1; padding: 13px; border-radius: 10px; border: 0; font-size: 15px; font-weight: 700; font-family: inherit; }
+  .btn.pri { background: var(--primary-2); color: #fff; }
+  .btn.sec { background: #E8EEED; color: var(--primary); }
+  .btn.del { background: #FBE4E1; color: #B3362B; }
+  .btn:disabled { opacity: .45; }
+  .viewer img { width: 100%; border-radius: 10px; background: #EEF2F1; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HOME -->
+  <div id="home" class="screen active">
+    <div class="topbar">
+      <div class="logo">minha<span>carteira</span></div>
+      <div class="top-right">
+        <div class="bell">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M12 22a2.2 2.2 0 0 0 2.2-2.2h-4.4A2.2 2.2 0 0 0 12 22zm6.5-6.5V11a6.5 6.5 0 0 0-5-6.3V4a1.5 1.5 0 0 0-3 0v.7a6.5 6.5 0 0 0-5 6.3v4.5L3.5 17.5V19h17v-1.5z"/></svg>
+          <div class="badge">2</div>
+        </div>
+        <div class="avatar"></div>
+      </div>
+    </div>
+
+    <div class="scroll">
+      <div class="banner">
+        <h2>Olá, visitante</h2>
+        <p>Seus documentos num só lugar</p>
+        <div class="stripes"><i></i><i></i><i></i></div>
+        <div style="height:34px"></div>
+        <div class="pill">VER PERFIL</div>
+      </div>
+
+      <div class="search">
+        <span>Encontre serviços</span>
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M16 16l5 5"/></svg>
+      </div>
+
+      <div class="card">
+        <h3>Serviços</h3>
+
+        <div class="item">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5L16 9.5"/></svg>
+          <span class="label">Gerar código de acesso</span><span class="tag">NOVO</span>
+          <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5l7 7-7 7"/></svg>
+        </div>
+
+        <div class="item live" id="walletItem">
+          <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M4 5h14a2 2 0 0 1 2 2H6a1 1 0 0 0 0 2h15v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm13 9a1.3 1.3 0 1 0 0 2.6A1.3 1.3 0 0 0 17 14z"/></svg>
+          <span class="label">Carteira de documentos</span><span class="count" id="homeCount">0</span>
+          <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5l7 7-7 7"/></svg>
+        </div>
+
+        <div class="item">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20h14M6 16l1-4 8-8 3 3-8 8z"/></svg>
+          <span class="label">Assinar documentos</span>
+          <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5l7 7-7 7"/></svg>
+        </div>
+
+        <div class="item">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10" cy="10" r="6"/><path d="M15 15l5 5"/></svg>
+          <span class="label">Consultar pedidos</span>
+          <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5l7 7-7 7"/></svg>
+        </div>
+
+        <div class="item">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10M8 11l4 4 4-4M5 20h14"/></svg>
+          <span class="label">Baixar comprovantes</span>
+          <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5l7 7-7 7"/></svg>
+        </div>
+
+        <div class="item">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><path d="M14 14h3v3M20 14v6h-6"/></svg>
+          <span class="label">Entrar com QR code</span>
+          <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5l7 7-7 7"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav">
+      <button class="on"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 8h-3v9h-5v-6h-2v6H6v-9H3z"/></svg>Início</button>
+      <button><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm1 5h8V6H8zm0 4h8v-2H8zm0 4h6v-2H8z"/></svg>Dados</button>
+      <button class="qr-wrap"><div class="qr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><path d="M14 14h3v3M20 14v6h-6"/></svg></div>Leitor</button>
+      <button class="live" id="walletTab"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 5h14a2 2 0 0 1 2 2H6a1 1 0 0 0 0 2h15v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm13 9a1.3 1.3 0 1 0 0 2.6A1.3 1.3 0 0 0 17 14z"/></svg>Carteira</button>
+      <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>Menu</button>
+    </div>
+  </div>
+
+  <!-- WALLET -->
+  <div id="wallet" class="screen" style="position:relative">
+    <div class="wbar">
+      <button id="wBack"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <h1>Carteira de documentos</h1>
+    </div>
+    <div class="scroll"><div class="wbody" id="docList"></div></div>
+    <button class="fab" id="addBtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Adicionar</button>
+
+    <!-- add sheet -->
+    <div class="overlay" id="addOverlay">
+      <div class="sheet">
+        <h4>Novo documento</h4>
+        <label>Nome do documento</label>
+        <input type="text" id="docName" placeholder="Ex.: Identidade, Habilitação" maxlength="40">
+        <label>Imagem</label>
+        <button class="pick" id="pickBtn">Escolher foto da galeria</button>
+        <input type="file" id="fileInput" accept="image/*" style="display:none">
+        <img class="preview" id="preview" alt="">
+        <div class="row">
+          <button class="btn sec" id="cancelAdd">Cancelar</button>
+          <button class="btn pri" id="saveAdd" disabled>Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- view sheet -->
+    <div class="overlay" id="viewOverlay">
+      <div class="sheet viewer">
+        <h4 id="viewTitle"></h4>
+        <img id="viewImg" alt="">
+        <div class="row">
+          <button class="btn del" id="delDoc">Excluir</button>
+          <button class="btn sec" id="closeView">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var KEY = "minha_carteira_docs_v1";
+  var docs = [];
+  var pendingImg = null;
+  var viewingId = null;
+
+  function load() {
+    try { docs = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { docs = []; }
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(docs)); return true; }
+    catch (e) { alert("Sem espaço para salvar este documento."); return false; }
+  }
+  function $(id) { return document.getElementById(id); }
+
+  function show(id) {
+    document.querySelectorAll(".screen").forEach(function (s) { s.classList.remove("active"); });
+    $(id).classList.add("active");
+  }
+
+  function esc(t) {
+    return String(t).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function render() {
+    $("homeCount").textContent = docs.length;
+    var list = $("docList");
+    if (!docs.length) {
+      list.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 5h14a2 2 0 0 1 2 2H6a1 1 0 0 0 0 2h15v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg><div>Nenhum documento ainda.<br>Toque em <b>Adicionar</b> para guardar o primeiro.</div></div>';
+      return;
+    }
+    list.innerHTML = docs.map(function (d) {
+      return '<div class="doc" data-id="' + d.id + '"><img src="' + d.img + '" alt=""><div class="meta"><b>' +
+        esc(d.name) + '</b><small>Adicionado em ' + esc(d.date) + '</small></div></div>';
+    }).join("");
+    list.querySelectorAll(".doc").forEach(function (el) {
+      el.addEventListener("click", function () { openView(el.getAttribute("data-id")); });
+    });
+  }
+
+  function openWallet() { render(); show("wallet"); }
+  function closeWallet() { show("home"); }
+
+  function openAdd() {
+    pendingImg = null;
+    $("docName").value = "";
+    $("preview").style.display = "none";
+    $("saveAdd").disabled = true;
+    $("addOverlay").classList.add("show");
+  }
+  function closeAdd() { $("addOverlay").classList.remove("show"); }
+
+  function openView(id) {
+    var d = docs.filter(function (x) { return x.id === id; })[0];
+    if (!d) return;
+    viewingId = id;
+    $("viewTitle").textContent = d.name;
+    $("viewImg").src = d.img;
+    $("viewOverlay").classList.add("show");
+  }
+  function closeView() { $("viewOverlay").classList.remove("show"); viewingId = null; }
+
+  function updateSave() {
+    $("saveAdd").disabled = !(pendingImg && $("docName").value.trim());
+  }
+
+  function shrink(file, cb) {
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var im = new Image();
+      im.onload = function () {
+        var max = 1200, w = im.width, h = im.height;
+        var r = Math.min(1, max / Math.max(w, h));
+        var c = document.createElement("canvas");
+        c.width = Math.round(w * r); c.height = Math.round(h * r);
+        c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+        cb(c.toDataURL("image/jpeg", 0.8));
+      };
+      im.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // events
+  $("walletItem").addEventListener("click", openWallet);
+  $("walletTab").addEventListener("click", openWallet);
+  $("wBack").addEventListener("click", closeWallet);
+  $("addBtn").addEventListener("click", openAdd);
+  $("cancelAdd").addEventListener("click", closeAdd);
+  $("pickBtn").addEventListener("click", function () { $("fileInput").click(); });
+  $("docName").addEventListener("input", updateSave);
+  $("fileInput").addEventListener("change", function () {
+    var f = this.files && this.files[0];
+    if (!f) return;
+    shrink(f, function (data) {
+      pendingImg = data;
+      $("preview").src = data;
+      $("preview").style.display = "block";
+      updateSave();
+    });
+    this.value = "";
+  });
+  $("saveAdd").addEventListener("click", function () {
+    var now = new Date();
+    docs.unshift({
+      id: String(now.getTime()),
+      name: $("docName").value.trim(),
+      img: pendingImg,
+      date: now.toLocaleDateString("pt-BR")
+    });
+    if (save()) { closeAdd(); render(); } else { docs.shift(); }
+  });
+  $("closeView").addEventListener("click", closeView);
+  $("delDoc").addEventListener("click", function () {
+    if (!viewingId) return;
+    if (!confirm("Excluir este documento?")) return;
+    docs = docs.filter(function (x) { return x.id !== viewingId; });
+    save(); closeView(); render();
+  });
+
+  // Android back button
+  window.handleBack = function () {
+    if ($("viewOverlay").classList.contains("show")) { closeView(); return true; }
+    if ($("addOverlay").classList.contains("show")) { closeAdd(); return true; }
+    if ($("wallet").classList.contains("active")) { closeWallet(); return true; }
+    return false;
+  };
+
+  load();
+  render();
+})();
+</script>
+</body>
+</html>
